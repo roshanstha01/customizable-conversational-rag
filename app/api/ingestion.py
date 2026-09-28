@@ -68,15 +68,22 @@ def ingest_document(
     db.commit()
     db.refresh(document)
 
-    embeddings = embedding_service.embed_texts(chunks)
+    try:
+        embeddings = embedding_service.embed_texts(chunks)
 
-    vector_store.upsert_chunks(
-        document_id=document.id,
-        filename=document.filename,
-        strategy=document.chunking_strategy,
-        chunks=chunks,
-        embeddings=embeddings,
-    )
+        vector_store.upsert_chunks(
+            document_id=document.id,
+            filename=document.filename,
+            strategy=document.chunking_strategy,
+            chunks=chunks,
+            embeddings=embeddings,
+        )
+    except Exception:
+        # Don't leave a document row behind that has no vectors in Qdrant.
+        logger.warning("Indexing failed for document %s; removing its database row", document.id)
+        db.delete(document)
+        db.commit()
+        raise
 
     logger.info(
         "Ingested document %s (%s) into %d chunks using '%s' strategy",

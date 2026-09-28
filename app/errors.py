@@ -1,6 +1,6 @@
 import logging
 from contextlib import contextmanager
-from typing import Iterator, Tuple, Type
+from typing import Iterator, Optional, Tuple, Type
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -11,9 +11,10 @@ logger = logging.getLogger(__name__)
 class ServiceUnavailableError(Exception):
     """Raised when a backing service (Qdrant, Redis, Ollama) cannot be reached."""
 
-    def __init__(self, service: str) -> None:
-        super().__init__(f"{service} is unavailable")
+    def __init__(self, service: str, message: Optional[str] = None) -> None:
         self.service = service
+        self.message = message or f"{service} is unavailable. Please try again later."
+        super().__init__(self.message)
 
 
 @contextmanager
@@ -31,7 +32,7 @@ def register_error_handlers(app: FastAPI) -> None:
     async def service_unavailable_handler(request: Request, error: ServiceUnavailableError) -> JSONResponse:
         return JSONResponse(
             status_code=503,
-            content={"detail": f"{error.service} is unavailable. Please try again later."},
+            content={"detail": error.message},
         )
 
     @app.middleware("http")

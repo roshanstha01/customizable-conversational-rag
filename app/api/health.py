@@ -32,7 +32,7 @@ def health(request: Request) -> JSONResponse:
         return {}
 
     def check_qdrant() -> Dict[str, str]:
-        state.vector_store.ensure_collection()
+        state.vector_store.ping()
         return {}
 
     def check_redis() -> Dict[str, str]:
