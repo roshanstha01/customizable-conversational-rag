@@ -1,5 +1,4 @@
-from datetime import date, time
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 
 class DocumentIngestionResponse(BaseModel):
@@ -20,9 +19,3 @@ class ChatResponse(BaseModel):
     session_id: str
     response: str
 
-
-class BookingCreate(BaseModel):
-    name: str
-    email: EmailStr
-    date: date
-    time: time

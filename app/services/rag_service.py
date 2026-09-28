@@ -6,10 +6,19 @@ from app.services.vector_store import QdrantVectorStore
 
 
 class RAGService:
-    def __init__(self) -> None:
-        self.embedding_service = EmbeddingService()
-        self.vector_store = QdrantVectorStore()
-        self.llm_service = OllamaService()
+    def __init__(
+        self,
+        embedding_service: EmbeddingService,
+        vector_store: QdrantVectorStore,
+        llm_service: OllamaService,
+        top_k: int = 5,
+        max_history_messages: int = 6,
+    ) -> None:
+        self.embedding_service = embedding_service
+        self.vector_store = vector_store
+        self.llm_service = llm_service
+        self.top_k = top_k
+        self.max_history_messages = max_history_messages
 
     def retrieve_context(self, query: str, limit: int = 5) -> List[str]:
         query_embedding = self.embedding_service.embed_query(query)
@@ -46,13 +55,14 @@ class RAGService:
             },
         ]
 
-        recent_history = history[-6:] if len(history) > 6 else history
+        max_history = self.max_history_messages
+        recent_history = history[-max_history:] if len(history) > max_history else history
         messages.extend(recent_history)
         messages.append({"role": "user", "content": query})
 
         return messages
 
     def answer_query(self, query: str, history: List[Dict[str, str]]) -> str:
-        context_chunks = self.retrieve_context(query=query, limit=5)
+        context_chunks = self.retrieve_context(query=query, limit=self.top_k)
         messages = self.build_messages(query=query, context_chunks=context_chunks, history=history)
         return self.llm_service.generate_response(messages)

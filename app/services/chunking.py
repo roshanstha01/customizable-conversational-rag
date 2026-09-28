@@ -1,5 +1,7 @@
 from typing import List
 
+from app.config import get_settings
+
 
 def fixed_size_chunking(
     text: str,
@@ -61,10 +63,15 @@ def paragraph_chunking(
 
 def chunk_text(text: str, strategy: str) -> List[str]:
     strategy = strategy.lower()
+    settings = get_settings()
 
     if strategy == "fixed":
-        return fixed_size_chunking(text=text)
+        return fixed_size_chunking(
+            text=text,
+            chunk_size=settings.chunk_size,
+            overlap=settings.chunk_overlap,
+        )
     if strategy == "paragraph":
-        return paragraph_chunking(text=text)
+        return paragraph_chunking(text=text, max_length=settings.paragraph_max_length)
 
     raise ValueError("Invalid chunking strategy. Use 'fixed' or 'paragraph'.")

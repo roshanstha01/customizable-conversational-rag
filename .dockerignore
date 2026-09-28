@@ -1,0 +1,11 @@
+.git
+.gitignore
+venv/
+__pycache__/
+*.pyc
+.env
+app.db
+uploads/
+assets/
+*.log
+.vscode/

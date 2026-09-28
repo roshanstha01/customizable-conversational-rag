@@ -104,38 +104,41 @@ I want to book an interview. Name: Roshan, Email: roshan@example.com, Date: 2026
 
 ## How to Run
 
-### 1. Install dependencies
+### Option A: Docker Compose (recommended)
+
+```bash
+docker compose up --build
+```
+
+This starts the API, Qdrant, Redis and Ollama, and pulls the LLM (`llama3` by default,
+override with `LLM_MODEL`). The first start takes a while because it downloads the models.
+Check that everything is up with `GET http://127.0.0.1:8000/health`.
+
+### Option B: Run locally
+
+#### 1. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Start services
+#### 2. Configure (optional)
+Copy `.env.example` to `.env` and adjust. All settings have sensible defaults.
 
-#### Qdrant
+#### 3. Start services
 
 ```bash
 docker run -p 6333:6333 qdrant/qdrant
-```
-
-#### Redis
-
-```bash
 docker run -p 6379:6379 redis
+ollama pull llama3
 ```
 
-#### Ollama
-
-```bash
-ollama run llama3
-```
-
-### 3. Run Backend
+#### 4. Run Backend
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-### 4. API Documentation
+### API Documentation
 
 Open in browser:
 
