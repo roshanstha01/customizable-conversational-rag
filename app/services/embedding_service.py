@@ -16,6 +16,15 @@ class EmbeddingService:
     def dimension(self) -> int:
         return self.model.get_embedding_dimension()
 
+    @property
+    def tokenizer(self):
+        return self.model.tokenizer
+
+    @property
+    def max_tokens(self) -> int:
+        """Longest input (excluding special tokens) the model embeds without truncating."""
+        return self.model.max_seq_length - self.tokenizer.num_special_tokens_to_add()
+
     def embed_texts(self, texts: List[str]) -> List[List[float]]:
         embeddings = self.model.encode(texts, convert_to_numpy=True)
         return embeddings.tolist()

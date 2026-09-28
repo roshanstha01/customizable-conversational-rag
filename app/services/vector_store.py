@@ -1,10 +1,20 @@
 import logging
-from typing import List
+from typing import List, Optional
 
 import httpx
 from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import ResponseHandlingException
-from qdrant_client.http.models import Distance, PointStruct, VectorParams
+from qdrant_client.http.models import (
+    Distance,
+    FieldCondition,
+    Filter,
+    FilterSelector,
+    MatchAny,
+    MatchValue,
+    PayloadSchemaType,
+    PointStruct,
+    VectorParams,
+)
 
 from app.errors import unavailable_on
 
@@ -46,6 +56,14 @@ class QdrantVectorStore:
                     ),
                 )
 
+            # Indexes for the fields used in search filters and deletes (idempotent).
+            self.client.create_payload_index(
+                self.collection_name, "document_id", PayloadSchemaType.INTEGER
+            )
+            self.client.create_payload_index(
+                self.collection_name, "strategy", PayloadSchemaType.KEYWORD
+            )
+
         self._collection_ready = True
 
     def ping(self) -> None:
@@ -82,11 +100,37 @@ class QdrantVectorStore:
                 points=points,
             )
 
-    def search(self, query_embedding: List[float], limit: int = 5):
+    def search(
+        self,
+        query_embedding: List[float],
+        limit: int = 5,
+        document_ids: Optional[List[int]] = None,
+        strategy: Optional[str] = None,
+        score_threshold: Optional[float] = None,
+    ):
+        conditions = []
+        if document_ids:
+            conditions.append(FieldCondition(key="document_id", match=MatchAny(any=document_ids)))
+        if strategy:
+            conditions.append(FieldCondition(key="strategy", match=MatchValue(value=strategy)))
+
         with unavailable_on(QDRANT_ERRORS, "Qdrant"):
             results = self.client.query_points(
                 collection_name=self.collection_name,
                 query=query_embedding,
+                query_filter=Filter(must=conditions) if conditions else None,
+                score_threshold=score_threshold,
                 limit=limit,
             )
         return results.points
+
+    def delete_document(self, document_id: int) -> None:
+        with unavailable_on(QDRANT_ERRORS, "Qdrant"):
+            self.client.delete(
+                collection_name=self.collection_name,
+                points_selector=FilterSelector(
+                    filter=Filter(
+                        must=[FieldCondition(key="document_id", match=MatchValue(value=document_id))]
+                    )
+                ),
+            )

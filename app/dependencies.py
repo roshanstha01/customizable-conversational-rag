@@ -4,6 +4,7 @@ from fastapi import Depends, Request
 
 from app.config import Settings, get_settings
 from app.services.booking_service import BookingService
+from app.services.chunking import Chunker
 from app.services.embedding_service import EmbeddingService
 from app.services.llm_service import OllamaService
 from app.services.memory_service import RedisMemoryService
@@ -13,6 +14,10 @@ from app.services.vector_store import QdrantVectorStore
 
 def get_embedding_service(request: Request) -> EmbeddingService:
     return request.app.state.embedding_service
+
+
+def get_chunker(request: Request) -> Chunker:
+    return request.app.state.chunker
 
 
 def get_vector_store(request: Request) -> QdrantVectorStore:
@@ -47,4 +52,5 @@ def get_rag_service(
         llm_service=llm_service,
         top_k=settings.top_k,
         max_history_messages=settings.max_history_messages,
+        min_score=settings.min_similarity_score,
     )

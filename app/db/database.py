@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from app.config import get_settings
@@ -26,3 +26,19 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def init_db() -> None:
+    """Create tables and add columns introduced after the first release.
+
+    create_all() never alters existing tables, so older app.db files would be
+    missing new columns without this.
+    """
+    from app.db import models  # noqa: F401  (register models on Base)
+
+    Base.metadata.create_all(bind=engine)
+
+    existing = {column["name"] for column in inspect(engine).get_columns("documents")}
+    if "stored_filename" not in existing:
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE documents ADD COLUMN stored_filename VARCHAR(255)"))

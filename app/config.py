@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     # Storage
     database_url: str = "sqlite:///./app.db"
     upload_dir: str = "uploads"
+    max_upload_size_mb: int = 10
 
     # Qdrant
     qdrant_host: str = "localhost"
@@ -32,14 +33,20 @@ class Settings(BaseSettings):
     ollama_host: str = "http://localhost:11434"
     llm_model: str = "llama3"
 
-    # Chunking
-    chunk_size: int = 500
-    chunk_overlap: int = 50
-    paragraph_max_length: int = 500
+    # Chunking (sizes are in embedding-model tokens; capped at the model's limit)
+    chunk_size: int = 200
+    chunk_overlap: int = 40
 
     # Retrieval
     top_k: int = 5
+    max_top_k: int = 20
+    min_similarity_score: float = 0.25
+    snippet_length: int = 200
+
+    # Conversation
     max_history_messages: int = 6
+    chat_history_ttl_seconds: int = 60 * 60 * 24
+    chat_history_max_messages: int = 50
 
 
 @lru_cache

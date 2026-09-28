@@ -33,9 +33,12 @@ The system follows a modular architecture:
 ### Features
 - Upload `.txt` and `.pdf` files
 - Extract text from files
-- Apply **two chunking strategies**:
-  - Fixed chunking
-  - Paragraph chunking
+- Apply **two token-based chunking strategies** (using the embedding model's tokenizer):
+  - Fixed chunking: packs whole sentences up to `chunk_size` tokens, with `overlap` tokens carried between chunks
+  - Paragraph chunking: detects paragraphs (including PDF text with single line breaks), merges small ones and splits long ones by sentence
+  - No chunk exceeds the embedding model's limit (254 content tokens for `all-MiniLM-L6-v2`)
+- Optional form fields `chunk_size` and `overlap` (defaults from `CHUNK_SIZE` / `CHUNK_OVERLAP`)
+- Upload size limit (`MAX_UPLOAD_SIZE_MB`, default 10 MB)
 - Generate embeddings using Sentence Transformers
 - Store embeddings in **Qdrant vector database**
 - Store document metadata in SQLite
@@ -49,9 +52,23 @@ The system follows a modular architecture:
 
 ### Features
 - Custom RAG implementation (**no RetrievalQAChain used**)
-- Retrieve relevant chunks from Qdrant
+- Rewrites follow-up questions into standalone search queries using the LLM and chat history
+- Retrieve relevant chunks from Qdrant, dropping results below `MIN_SIMILARITY_SCORE`
+- Optional request fields: `top_k`, `document_ids`, `chunking_strategy` (filters)
 - Generate response using LLM (Ollama)
-- Context-aware answers based on documents
+- Returns `sources` (filename, chunk index, score, snippet) with each answer
+
+### Example Request
+
+```json
+{
+  "session_id": "abc",
+  "message": "What language is it written in?",
+  "top_k": 3,
+  "document_ids": [1, 2],
+  "chunking_strategy": "paragraph"
+}
+```
 
 ---
 
@@ -59,6 +76,7 @@ The system follows a modular architecture:
 
 - Chat memory implemented using **Redis**
 - Maintains conversation history per session
+- History expires after `CHAT_HISTORY_TTL_SECONDS` and is capped at `CHAT_HISTORY_MAX_MESSAGES`
 - Supports follow-up questions
 
 ---
@@ -84,7 +102,13 @@ I want to book an interview. Name: Roshan, Email: roshan@example.com, Date: 2026
 ## Additional APIs
 
 ### GET `/api/documents`
-- Returns all ingested documents
+- Returns metadata for all ingested documents (without the raw text)
+
+### DELETE `/api/documents/{id}`
+- Deletes a document from SQLite, its vectors from Qdrant and its uploaded file
+
+### GET `/health`
+- Reports the status of the database, Qdrant, Redis, Ollama and the embedding model
 
 ### GET `/api/bookings`
 - Returns all interview bookings

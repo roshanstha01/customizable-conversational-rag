@@ -9,6 +9,7 @@ class Document(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), nullable=False)
+    stored_filename = Column(String(255), nullable=True)
     file_type = Column(String(20), nullable=False)
     chunking_strategy = Column(String(50), nullable=False)
     total_chunks = Column(Integer, nullable=False, default=0)

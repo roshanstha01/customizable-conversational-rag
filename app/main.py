@@ -10,9 +10,10 @@ from app.api.document import router as document_router
 from app.api.health import router as health_router
 from app.api.ingestion import router as ingestion_router
 from app.config import get_settings
-from app.db.database import Base, engine
+from app.db.database import init_db
 from app.errors import ServiceUnavailableError, register_error_handlers
 from app.logging_config import setup_logging
+from app.services.chunking import Chunker
 from app.services.embedding_service import EmbeddingService
 from app.services.llm_service import OllamaService
 from app.services.memory_service import RedisMemoryService
@@ -27,11 +28,18 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     logger.info("Starting %s", settings.app_name)
 
-    Base.metadata.create_all(bind=engine)
+    init_db()
     Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
 
     # Loaded once and shared by every request.
     embedding_service = EmbeddingService(settings.embedding_model)
+    chunker = Chunker(embedding_service.tokenizer, max_tokens=embedding_service.max_tokens)
+    if settings.chunk_size > chunker.max_tokens:
+        logger.warning(
+            "CHUNK_SIZE=%s exceeds the embedding model limit; using %s tokens instead",
+            settings.chunk_size,
+            chunker.max_tokens,
+        )
 
     vector_store = QdrantVectorStore(
         host=settings.qdrant_host,
@@ -51,12 +59,15 @@ async def lifespan(app: FastAPI):
         )
 
     app.state.embedding_service = embedding_service
+    app.state.chunker = chunker
     app.state.vector_store = vector_store
     app.state.memory_service = RedisMemoryService(
         host=settings.redis_host,
         port=settings.redis_port,
         db=settings.redis_db,
         timeout=settings.redis_timeout,
+        ttl_seconds=settings.chat_history_ttl_seconds,
+        max_messages=settings.chat_history_max_messages,
     )
     app.state.llm_service = OllamaService(host=settings.ollama_host, model_name=settings.llm_model)
 

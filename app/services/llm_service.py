@@ -1,7 +1,7 @@
 #Ollama
 
 import logging
-from typing import List, Dict
+from typing import Dict, List, Optional
 
 import httpx
 import ollama
@@ -18,12 +18,18 @@ class OllamaService:
         self.model_name = model_name
         self.client = ollama.Client(host=host)
 
-    def generate_response(self, messages: List[Dict[str, str]]) -> str:
+    def generate_response(
+        self,
+        messages: List[Dict[str, str]],
+        temperature: Optional[float] = None,
+    ) -> str:
+        options = {"temperature": temperature} if temperature is not None else None
         try:
             with unavailable_on(OLLAMA_ERRORS, "Ollama"):
                 response = self.client.chat(
                     model=self.model_name,
                     messages=messages,
+                    options=options,
                 )
         except ollama.ResponseError as error:
             logger.warning("Ollama returned an error: %s", error)
