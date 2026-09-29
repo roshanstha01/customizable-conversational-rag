@@ -18,6 +18,10 @@ def test_normalize_text_rejoins_hyphenated_line_breaks():
     assert normalize_text(text) == "It combines data and optimization. Self-\nService stays split."
 
 
+def test_normalize_text_expands_pdf_ligatures():
+    assert normalize_text("certiﬁed ofﬁce ﬂoor") == "certified office floor"
+
+
 def test_split_sentences():
     assert split_sentences("First one. Second one!  Third?\nFourth") == [
         "First one.", "Second one!", "Third?", "Fourth",

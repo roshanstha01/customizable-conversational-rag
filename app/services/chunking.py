@@ -1,4 +1,5 @@
 import re
+import unicodedata
 from typing import List, Optional
 
 STRATEGIES = {"fixed", "paragraph"}
@@ -13,7 +14,13 @@ HYPHENATED_LINE_BREAK = re.compile(r"(\w)-[ \t]*\n[ \t]*([a-z])")
 
 
 def normalize_text(text: str) -> str:
-    """Clean extracted text before chunking: rejoin words hyphenated across lines."""
+    """Clean extracted text before chunking.
+
+    - NFKC-normalize, which expands typographic ligatures that PDF extraction
+      often returns (e.g. "certiﬁed" -> "certified").
+    - Rejoin words hyphenated across lines.
+    """
+    text = unicodedata.normalize("NFKC", text)
     return HYPHENATED_LINE_BREAK.sub(r"\1\2", text)
 
 

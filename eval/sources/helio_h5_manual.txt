@@ -1,0 +1,41 @@
+# Helio H5 Hybrid Solar Inverter - User Manual
+
+This manual covers installation, operation and maintenance of the Helio H5 hybrid inverter. Read it completely before installing the unit and keep it near the inverter for future reference. Installation must be carried out by a certified installer.
+
+# Safety
+
+The inverter contains high voltages from both the solar array and the grid. Before opening the cover, switch off both the DC isolator and the AC breaker, then wait five minutes for the internal capacitors to discharge. Never touch the terminals while the unit is connected. Use insulated tools and wear protective gloves during any work on the wiring.
+
+# Installation
+
+Mount the inverter vertically on a solid, non-flammable wall. Leave at least 30 cm of clearance on each side of the unit so that air can circulate freely. Avoid locations in direct sunlight or near sources of heat. The inverter operates at ambient temperatures from -25 to 60 degrees Celsius, but it automatically derates above 45 degrees Celsius to protect its components, which reduces output power.
+
+# Specifications
+
+The Helio H5 has a rated AC output of 5 kW. The maximum PV input power is 6500 W, and the MPPT voltage range is 120 to 450 V. The unit weighs 18 kg and has an IP65 enclosure suitable for sheltered outdoor installation.
+
+# Battery Connection
+
+The inverter is compatible with 48 V lithium iron phosphate batteries that support CAN bus communication. Connect the battery communication cable to the port labelled BMS. After connecting a battery, set the battery type in menu 05 of the display. Using an unsupported battery may damage the battery and will void the warranty.
+
+# Status Lights
+
+A steady green LED means the inverter is connected to the grid and operating normally. A blinking green LED means the battery is charging. A steady red LED indicates a fault; the error code is shown on the display.
+
+# Error Codes
+
+E01 grid voltage out of range: check the utility supply and the AC breaker. The inverter reconnects automatically once the grid voltage is stable.
+
+E07 battery over-temperature: the battery is too hot to charge or discharge safely. Improve ventilation around the battery and check that it is not in direct sunlight.
+
+E12 PV insulation fault: the inverter detected current leaking from the solar array to ground. Check the panel wiring for damaged insulation, especially at connectors and roof penetrations.
+
+E21 fan failure: the cooling fan is blocked or broken. Remove any debris from the fan and contact support if the error persists.
+
+# Maintenance
+
+Clean the air filter every three months, or monthly in dusty environments. Check that all terminals are tight once a year. Firmware updates are installed from a USB drive formatted as FAT32 inserted into the port on the underside of the unit; the update takes about ten minutes and the inverter restarts automatically.
+
+# Warranty
+
+The Helio H5 comes with a 5-year standard warranty. The warranty can be extended to 10 years if the product is registered within 90 days of installation on the Helio website. The warranty does not cover damage caused by lightning, flooding or installation by an uncertified installer.

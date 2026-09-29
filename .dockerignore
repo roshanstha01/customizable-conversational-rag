@@ -9,3 +9,5 @@ uploads/
 assets/
 *.log
 .vscode/
+eval/
+tests/

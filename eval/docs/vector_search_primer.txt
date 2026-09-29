@@ -1,0 +1,33 @@
+A Practical Primer on Vector Search
+
+Embeddings
+
+An embedding model maps a piece of text to a fixed-length vector of numbers so that texts with similar meaning end up close together. Sentence embedding models such as MiniLM produce vectors with a few hundred dimensions. Every model has a maximum sequence length, and tokens beyond the maximum sequence length are silently truncated, so the end of a long passage simply never influences its vector. This is one of the main reasons documents are split into chunks before they are embedded.
+
+Similarity Metrics
+
+Cosine similarity measures the angle between two vectors and ignores their length, which makes it the usual choice for normalized text embeddings. The dot product also takes vector length into account and is equivalent to cosine similarity when all vectors are normalized. Euclidean distance measures the straight-line distance between points; smaller values mean more similar items.
+
+Approximate Nearest Neighbour Search
+
+Comparing a query against every stored vector is exact but slow for large collections, so vector databases use approximate nearest neighbour indexes. HNSW, short for Hierarchical Navigable Small World, organizes vectors in a multi-layer graph where upper layers contain few long-range links and lower layers contain many short-range links. A search starts at the top layer and greedily moves closer to the query at each level. The m parameter controls how many links each node keeps, and ef_construction controls how thoroughly the graph is built. Raising the ef parameter at query time trades speed for higher recall.
+
+Another family of indexes is IVF, the inverted file index. IVF partitions vectors into clusters using k-means and, at query time, only scans the nprobe clusters closest to the query. Product quantization compresses vectors into short codes by splitting each vector into sub-vectors and replacing every sub-vector with the id of its nearest centroid. This can reduce memory use by more than ten times at the cost of some accuracy.
+
+Chunking
+
+Chunk size is a trade-off. Large chunks dilute the meaning of the text, because one vector has to represent many different ideas. Very small chunks lose the surrounding context that makes a passage understandable. Splitting on sentence or paragraph boundaries keeps ideas intact, and a small overlap preserves sentences that would otherwise be cut at chunk boundaries. Chunk sizes are best measured in tokens of the embedding model rather than characters.
+
+Hybrid Search and Reranking
+
+Pure vector search can miss exact matches such as product codes or rare names. Hybrid search combines keyword scores from BM25 with vector similarity scores. A common way to merge the two ranked lists is reciprocal rank fusion, which adds up one divided by the rank plus a constant for every list a document appears in, typically with a constant of 60.
+
+A cross-encoder can rerank the top candidates. Unlike an embedding model, which encodes the query and the document separately, a cross-encoder reads the query and the passage together and outputs a relevance score. It is too slow to run over a whole collection, so it is usually applied to the top 50 results of a first-stage search.
+
+Metadata Filtering
+
+Vector databases can filter results by metadata such as document id, author or date. With pre-filtering, the filter is applied during the search, so every returned result matches. With post-filtering, the nearest neighbours are found first and non-matching ones are removed afterwards, which can return fewer than k results when the filter is selective.
+
+Evaluating Retrieval
+
+Retrieval quality is usually measured on a set of questions with known relevant passages. Hit rate at k is the share of questions for which a relevant passage appears in the top k results. Mean reciprocal rank averages one divided by the rank of the first relevant result, so it rewards putting the right passage first. Normalized discounted cumulative gain also accounts for multiple relevant passages with different grades of relevance.

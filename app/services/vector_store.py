@@ -31,9 +31,11 @@ class QdrantVectorStore:
         collection_name: str,
         vector_size: int,
         timeout: int = 10,
+        client: Optional[QdrantClient] = None,
     ) -> None:
         # Creating the client does not open a connection, so this is safe while Qdrant is down.
-        self.client = QdrantClient(host=host, port=port, timeout=timeout)
+        # A ready-made client (e.g. QdrantClient(":memory:") for evaluation) can be passed in.
+        self.client = client or QdrantClient(host=host, port=port, timeout=timeout)
         self.collection_name = collection_name
         self.vector_size = vector_size
         self._collection_ready = False

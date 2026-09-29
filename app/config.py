@@ -11,7 +11,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    app_name: str = "AI/ML Intern Task API"
+    app_name: str = "Customizable Conversational RAG"
     log_level: str = "INFO"
     # IANA time zone used for "now"/"today" in bookings (dates and times are local to it).
     timezone: str = "Asia/Kathmandu"

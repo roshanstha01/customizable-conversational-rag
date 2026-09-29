@@ -1,0 +1,31 @@
+{"id": "hb-01", "doc": "northwind_handbook.txt", "type": "direct", "question": "How many days of paid annual leave do employees get?", "expected": "18 days of paid annual leave"}
+{"id": "hb-02", "doc": "northwind_handbook.txt", "type": "paraphrase", "question": "Can I keep vacation days I didn't use for next year?", "expected": "Up to 5 unused days carry over"}
+{"id": "hb-03", "doc": "northwind_handbook.txt", "type": "paraphrase", "question": "When do I need a medical certificate after being ill?", "expected": "longer than three consecutive days"}
+{"id": "hb-04", "doc": "northwind_handbook.txt", "type": "direct", "question": "What is the deadline for submitting expense claims?", "expected": "within 30 days of purchase"}
+{"id": "hb-05", "doc": "northwind_handbook.txt", "type": "paraphrase", "question": "Who signs off on a really expensive reimbursement?", "expected": "approval from a department head"}
+{"id": "hb-06", "doc": "northwind_handbook.txt", "type": "paraphrase", "question": "How often am I allowed to work from home?", "expected": "three remote days per week"}
+{"id": "hb-07", "doc": "northwind_handbook.txt", "type": "direct", "question": "What can the home office stipend be spent on?", "expected": "chairs, monitors and internet upgrades"}
+{"id": "hb-08", "doc": "northwind_handbook.txt", "type": "paraphrase", "question": "What is the first step for job applicants?", "expected": "30-minute screening call"}
+{"id": "hb-09", "doc": "northwind_handbook.txt", "type": "direct", "question": "How quickly must interviewers submit their feedback?", "expected": "within 24 hours of each interview"}
+{"id": "hb-10", "doc": "northwind_handbook.txt", "type": "paraphrase", "question": "My work laptop was stolen, what do I do?", "expected": "report lost devices"}
+{"id": "vs-01", "doc": "vector_search_primer.txt", "type": "direct", "question": "What does cosine similarity measure?", "expected": "measures the angle between two vectors"}
+{"id": "vs-02", "doc": "vector_search_primer.txt", "type": "direct", "question": "How does HNSW organize vectors?", "expected": "multi-layer graph"}
+{"id": "vs-03", "doc": "vector_search_primer.txt", "type": "paraphrase", "question": "Which setting lets me get better recall from HNSW searches at the cost of speed?", "expected": "ef parameter at query time"}
+{"id": "vs-04", "doc": "vector_search_primer.txt", "type": "paraphrase", "question": "How can I shrink the memory footprint of stored vectors?", "expected": "compresses vectors into short codes"}
+{"id": "vs-05", "doc": "vector_search_primer.txt", "type": "direct", "question": "Why add overlap between chunks?", "expected": "overlap preserves sentences"}
+{"id": "vs-06", "doc": "vector_search_primer.txt", "type": "paraphrase", "question": "How do you merge keyword and semantic search rankings?", "expected": "reciprocal rank fusion"}
+{"id": "vs-07", "doc": "vector_search_primer.txt", "type": "direct", "question": "What does a cross-encoder do differently from an embedding model?", "expected": "reads the query and the passage together"}
+{"id": "vs-08", "doc": "vector_search_primer.txt", "type": "paraphrase", "question": "Why might a filtered vector query return too few results?", "expected": "fewer than k results"}
+{"id": "vs-09", "doc": "vector_search_primer.txt", "type": "paraphrase", "question": "What happens to the end of a very long passage when it is embedded?", "expected": "silently truncated"}
+{"id": "vs-10", "doc": "vector_search_primer.txt", "type": "direct", "question": "How does an IVF index work?", "expected": "partitions vectors into clusters"}
+{"id": "vs-11", "doc": "vector_search_primer.txt", "type": "direct", "question": "What does mean reciprocal rank reward?", "expected": "rewards putting the right passage first"}
+{"id": "hi-01", "doc": "helio_h5_manual.pdf", "type": "direct", "question": "What should I do before opening the inverter cover?", "expected": "wait five minutes"}
+{"id": "hi-02", "doc": "helio_h5_manual.pdf", "type": "paraphrase", "question": "How much free space does the unit need around it?", "expected": "at least 30 cm of clearance"}
+{"id": "hi-03", "doc": "helio_h5_manual.pdf", "type": "direct", "question": "What does error E07 mean?", "expected": "E07 battery over-temperature"}
+{"id": "hi-04", "doc": "helio_h5_manual.pdf", "type": "paraphrase", "question": "The display shows E12, what should I inspect?", "expected": "damaged insulation"}
+{"id": "hi-05", "doc": "helio_h5_manual.pdf", "type": "direct", "question": "How often should the air filter be cleaned?", "expected": "every three months"}
+{"id": "hi-06", "doc": "helio_h5_manual.pdf", "type": "paraphrase", "question": "How do I install new software on the inverter?", "expected": "formatted as FAT32"}
+{"id": "hi-07", "doc": "helio_h5_manual.pdf", "type": "direct", "question": "How long is the standard warranty?", "expected": "5-year standard warranty"}
+{"id": "hi-08", "doc": "helio_h5_manual.pdf", "type": "paraphrase", "question": "How do I get ten years of coverage?", "expected": "registered within 90 days"}
+{"id": "hi-09", "doc": "helio_h5_manual.pdf", "type": "paraphrase", "question": "What kind of battery can I pair with this device?", "expected": "48 V lithium iron phosphate"}
+{"id": "hi-10", "doc": "helio_h5_manual.pdf", "type": "paraphrase", "question": "What does it mean when the green light flashes?", "expected": "battery is charging"}
