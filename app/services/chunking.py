@@ -8,6 +8,13 @@ SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?])[\"')\]]*\s+")
 # A line that ends a sentence/heading/list item; the next line then starts a new paragraph.
 PARAGRAPH_END = re.compile(r"[.!?:;\"')\]]$")
 BLANK_LINE = re.compile(r"\n\s*\n")
+# A word split across a line break with a hyphen, e.g. "com-\nbines" (next part lowercase).
+HYPHENATED_LINE_BREAK = re.compile(r"(\w)-[ \t]*\n[ \t]*([a-z])")
+
+
+def normalize_text(text: str) -> str:
+    """Clean extracted text before chunking: rejoin words hyphenated across lines."""
+    return HYPHENATED_LINE_BREAK.sub(r"\1\2", text)
 
 
 def split_sentences(text: str) -> List[str]:
@@ -21,7 +28,7 @@ def split_paragraphs(text: str) -> List[str]:
     Blank lines always separate paragraphs. PDF text from PyMuPDF usually has only
     single newlines (one per visual line), so inside a block a newline is treated
     as a paragraph break only when the line ends a sentence; otherwise the lines
-    are a wrapped paragraph and are joined (de-hyphenating split words).
+    are a wrapped paragraph and are joined.
     """
     paragraphs = []
 
@@ -32,8 +39,6 @@ def split_paragraphs(text: str) -> List[str]:
         for line in lines:
             if not current:
                 current = line
-            elif current.endswith("-") and line[:1].islower():
-                current = current[:-1] + line
             else:
                 current = f"{current} {line}"
 
@@ -74,6 +79,7 @@ class Chunker:
     def chunk(self, text: str, strategy: str, chunk_size: int, overlap: int = 0) -> List[str]:
         strategy = strategy.lower()
         self.validate(strategy, chunk_size, overlap)
+        text = normalize_text(text)
 
         if strategy == "fixed":
             chunks = self._pack(split_sentences(text), chunk_size, overlap)
@@ -196,4 +202,4 @@ def resolve_chunk_params(
     size = chunk_size if chunk_size is not None else default_chunk_size
     if strategy == "paragraph":
         return size, 0
-    return size, overlap if overlap is not None else min(default_overlap, max(size - 1, 0))
+    return size, overlap if overlap is not None else min(default_overlap, size // 5)
