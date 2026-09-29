@@ -36,8 +36,16 @@ def get_memory_service(request: Request) -> RedisMemoryService:
     return request.app.state.memory_service
 
 
-def get_booking_service() -> BookingService:
-    return BookingService()
+def get_booking_service(
+    llm_service: OllamaService = Depends(get_llm_service),
+    memory_service: RedisMemoryService = Depends(get_memory_service),
+    settings: Settings = Depends(get_settings),
+) -> BookingService:
+    return BookingService(
+        llm_service=llm_service,
+        memory_service=memory_service,
+        state_ttl_seconds=settings.booking_state_ttl_seconds,
+    )
 
 
 def get_rag_service(

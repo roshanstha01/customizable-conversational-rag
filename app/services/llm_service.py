@@ -22,6 +22,7 @@ class OllamaService:
         self,
         messages: List[Dict[str, str]],
         temperature: Optional[float] = None,
+        json_format: bool = False,
     ) -> str:
         options = {"temperature": temperature} if temperature is not None else None
         try:
@@ -30,6 +31,7 @@ class OllamaService:
                     model=self.model_name,
                     messages=messages,
                     options=options,
+                    format="json" if json_format else None,
                 )
         except ollama.ResponseError as error:
             logger.warning("Ollama returned an error: %s", error)

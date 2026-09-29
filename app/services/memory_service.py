@@ -1,5 +1,5 @@
 import json
-from typing import List, Dict
+from typing import Dict, List, Optional
 
 import redis
 
@@ -50,6 +50,20 @@ class RedisMemoryService:
         key = f"chat:{session_id}"
         with unavailable_on(REDIS_ERRORS, "Redis"):
             self.client.delete(key)
+
+    def get_state(self, session_id: str, name: str) -> Optional[Dict]:
+        """Read a small JSON state object stored for a session (e.g. a pending booking)."""
+        with unavailable_on(REDIS_ERRORS, "Redis"):
+            value = self.client.get(f"{name}:{session_id}")
+        return json.loads(value) if value is not None else None
+
+    def set_state(self, session_id: str, name: str, value: Dict, ttl_seconds: int) -> None:
+        with unavailable_on(REDIS_ERRORS, "Redis"):
+            self.client.set(f"{name}:{session_id}", json.dumps(value), ex=ttl_seconds)
+
+    def clear_state(self, session_id: str, name: str) -> None:
+        with unavailable_on(REDIS_ERRORS, "Redis"):
+            self.client.delete(f"{name}:{session_id}")
 
     def ping(self) -> bool:
         with unavailable_on(REDIS_ERRORS, "Redis"):

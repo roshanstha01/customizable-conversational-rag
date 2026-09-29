@@ -47,6 +47,8 @@ class Settings(BaseSettings):
     max_history_messages: int = 6
     chat_history_ttl_seconds: int = 60 * 60 * 24
     chat_history_max_messages: int = 50
+    # How long a half-finished booking is remembered between messages.
+    booking_state_ttl_seconds: int = 60 * 30
 
 
 @lru_cache

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Date, DateTime, Integer, String, Text, Time
+from sqlalchemy import Column, Date, DateTime, Index, Integer, String, Text, Time
 from sqlalchemy.sql import func
 
 from app.db.database import Base
@@ -19,6 +19,8 @@ class Document(Base):
 
 class Booking(Base):
     __tablename__ = "bookings"
+    # One booking per interview slot.
+    __table_args__ = (Index("uq_bookings_slot", "date", "time", unique=True),)
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)

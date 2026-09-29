@@ -83,19 +83,26 @@ The system follows a modular architecture:
 
 ## Interview Booking Feature
 
-The system supports booking detection using LLM:
+Booking happens inside `/api/chat`:
 
-### Example Input
+- The LLM classifies each message as a **booking** or a **question**, so a question like
+  "What's the interview schedule in the doc?" still goes to RAG
+- The LLM extracts name, email, date and time as JSON; values are validated with a Pydantic
+  model (valid email, a real date/time in the future, times like `9:00`, `14:30` or `2pm`)
+- Missing or invalid details are asked for, and the partial booking is kept in Redis across
+  turns (`BOOKING_STATE_TTL_SECONDS`); the user can also cancel
+- Each date/time slot can only be booked once
 
-```bash
-I want to book an interview. Name: Roshan, Email: roshan@example.com, Date: 2026-04-20, Time: 14:00
+### Example Conversation
+
 ```
-
-
-### Functionality
-- Extracts structured data
-- Stores booking in database
-- Returns confirmation message
+User: I'd like to book an interview. My name is Priya Sharma.
+Bot:  To book your interview I still need your email address, the date (e.g. 2026-10-05) and the time (e.g. 9:00 or 2pm).
+User: priya.sharma@example.com
+Bot:  To book your interview I still need the date (e.g. 2026-10-05) and the time (e.g. 9:00 or 2pm).
+User: Let's do 2026-10-14 at 3:30pm
+Bot:  Your interview is booked for Wednesday, October 14, 2026 at 15:30 under Priya Sharma (priya.sharma@example.com).
+```
 
 ---
 
@@ -161,6 +168,15 @@ ollama pull llama3
 ```bash
 uvicorn app.main:app --reload
 ```
+
+### Running Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+The tests fake Qdrant, Redis and the LLM, so no services need to be running.
 
 ### API Documentation
 

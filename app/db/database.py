@@ -1,7 +1,12 @@
+import logging
+
 from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from app.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
@@ -29,10 +34,10 @@ def get_db():
 
 
 def init_db() -> None:
-    """Create tables and add columns introduced after the first release.
+    """Create tables and add columns/indexes introduced after the first release.
 
     create_all() never alters existing tables, so older app.db files would be
-    missing new columns without this.
+    missing them without this.
     """
     from app.db import models  # noqa: F401  (register models on Base)
 
@@ -42,3 +47,12 @@ def init_db() -> None:
     if "stored_filename" not in existing:
         with engine.begin() as connection:
             connection.execute(text("ALTER TABLE documents ADD COLUMN stored_filename VARCHAR(255)"))
+
+    try:
+        with engine.begin() as connection:
+            connection.execute(
+                text("CREATE UNIQUE INDEX IF NOT EXISTS uq_bookings_slot ON bookings (date, time)")
+            )
+    except (IntegrityError, OperationalError):
+        # Existing duplicate bookings; the app still checks for taken slots before inserting.
+        logger.warning("Could not add unique index on bookings(date, time): duplicate slots exist")

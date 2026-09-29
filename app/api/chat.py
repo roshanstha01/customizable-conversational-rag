@@ -35,9 +35,11 @@ def chat(
     history = memory_service.get_history(request.session_id)
     sources = []
 
-    if booking_service.is_booking_intent(request.message):
-        logger.info("Booking intent detected for session %s", request.session_id)
-        response_text = booking_service.save_booking(db=db, message=request.message)
+    booking_reply = booking_service.handle_message(
+        db=db, session_id=request.session_id, message=request.message
+    )
+    if booking_reply is not None:
+        response_text = booking_reply
     else:
         result = rag_service.answer_query(
             query=request.message,
