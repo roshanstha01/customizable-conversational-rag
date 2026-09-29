@@ -7,6 +7,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, EmailStr, ValidationError, ValidationInfo, field_validator, model_validator
 
+from app.config import local_now
+
 BOOKING_FIELDS = ("name", "email", "date", "time")
 
 DATE_FORMATS = (
@@ -108,7 +110,7 @@ class BookingDetails(BaseModel):
 
     @model_validator(mode="after")
     def validate_in_future(self, info: ValidationInfo) -> "BookingDetails":
-        now = (info.context or {}).get("now") or datetime.now()
+        now = (info.context or {}).get("now") or local_now()
         if datetime.combine(self.date, self.time) <= now:
             raise ValueError("The interview date and time must be in the future.")
         return self
@@ -131,7 +133,7 @@ def validate_draft(draft: Dict[str, Optional[str]], now: Optional[datetime] = No
     try:
         details = BookingDetails.model_validate(
             {name: draft.get(name) for name in BOOKING_FIELDS},
-            context={"now": now or datetime.now()},
+            context={"now": now or local_now()},
         )
         return DraftValidation(details=details)
     except ValidationError as error:

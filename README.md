@@ -85,13 +85,16 @@ The system follows a modular architecture:
 
 Booking happens inside `/api/chat`:
 
-- The LLM classifies each message as a **booking** or a **question**, so a question like
-  "What's the interview schedule in the doc?" still goes to RAG
+- Messages mentioning booking words (book, schedule, interview, appointment, meeting), or sent
+  while a booking is in progress, are classified by the LLM as a **booking** or a **question**,
+  so a question like "What's the interview schedule in the doc?" still goes to RAG; all other
+  messages go straight to RAG
 - The LLM extracts name, email, date and time as JSON; values are validated with a Pydantic
   model (valid email, a real date/time in the future, times like `9:00`, `14:30` or `2pm`)
 - Missing or invalid details are asked for, and the partial booking is kept in Redis across
   turns (`BOOKING_STATE_TTL_SECONDS`); the user can also cancel
 - Each date/time slot can only be booked once
+- Dates and times are interpreted in the `TIMEZONE` setting (default `Asia/Kathmandu`)
 
 ### Example Conversation
 

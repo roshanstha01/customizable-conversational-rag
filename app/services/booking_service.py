@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.config import local_now
 from app.db.models import Booking
 from app.services.booking_validation import BOOKING_FIELDS, BookingDetails, validate_draft
 from app.services.llm_service import OllamaService
@@ -66,12 +67,18 @@ FIELD_PROMPTS = {
 }
 
 
+# Messages without any of these words skip the LLM classifier (unless a booking is pending).
+BOOKING_HINT = re.compile(r"\b(book|schedul|interview|appointment|meeting)", re.IGNORECASE)
+
 DATE_HINT = re.compile(
-    r"\d|\b(today|tomorrow|mon|tue|wed|thu|fri|sat|sun|jan|feb|mar|apr|may|jun|jul|aug|sep|"
-    r"oct|nov|dec|week|month)",
+    r"\d|\b(today|tomorrow|week|month|"
+    r"(mon|tues?|wed(nes)?|thu(rs?)?|fri|sat(ur)?|sun)(day)?|"
+    r"jan(uary)?|feb(ruary)?|mar(ch)?|apr(il)?|may|june?|july?|aug(ust)?|sep(t(ember)?)?|"
+    r"oct(ober)?|nov(ember)?|dec(ember)?)\b",
     re.IGNORECASE,
 )
 TIME_HINT = re.compile(r"\d|\b(noon)\b", re.IGNORECASE)
+EMAIL_PATTERN = re.compile(r"\S+@\S+")
 
 
 def _supported_by_message(field: str, value: str, message: str) -> bool:
@@ -79,10 +86,12 @@ def _supported_by_message(field: str, value: str, message: str) -> bool:
     text = message.lower()
     if field in ("name", "email"):
         return value.lower() in text
+    # Digits or month-like words inside an email address are not a date/time.
+    without_emails = EMAIL_PATTERN.sub(" ", message)
     if field == "date":
-        return bool(DATE_HINT.search(message))
+        return bool(DATE_HINT.search(without_emails))
     if field == "time":
-        return bool(TIME_HINT.search(message))
+        return bool(TIME_HINT.search(without_emails))
     return True
 
 
@@ -101,10 +110,15 @@ class BookingService:
         llm_service: OllamaService,
         memory_service: RedisMemoryService,
         state_ttl_seconds: int = 1800,
+        timezone: Optional[str] = None,
     ) -> None:
         self.llm_service = llm_service
         self.memory_service = memory_service
         self.state_ttl_seconds = state_ttl_seconds
+        self.timezone = timezone
+
+    def now(self) -> datetime:
+        return local_now(self.timezone)
 
     def classify_intent(self, message: str, pending: Optional[Dict[str, Optional[str]]] = None) -> str:
         system_prompt = CLASSIFY_PROMPT
@@ -131,7 +145,7 @@ class BookingService:
         return INTENT_QUESTION
 
     def extract_fields(self, message: str, today: Optional[datetime] = None) -> Dict[str, Optional[str]]:
-        today = today or datetime.now()
+        today = today or self.now()
         reply = self.llm_service.generate_response(
             [
                 {
@@ -177,6 +191,10 @@ class BookingService:
     ) -> Optional[str]:
         """Return a reply if the message is part of a booking, else None (use RAG)."""
         pending = self.memory_service.get_state(session_id, BOOKING_STATE)
+        if pending is None and not BOOKING_HINT.search(message):
+            return None  # clearly not about booking; skip the LLM call
+
+        now = now or self.now()
         intent = self.classify_intent(message, pending)
         logger.info("Session %s intent: %s (pending booking: %s)", session_id, intent, pending is not None)
 

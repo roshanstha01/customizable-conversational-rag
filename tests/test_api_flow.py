@@ -35,9 +35,11 @@ def test_ingest_then_chat_returns_answer_with_sources(app_fakes):
     assert body["sources"][0]["filename"] == "qdrant.txt"
     assert set(body["sources"][0]) == {"document_id", "filename", "chunk_index", "score", "snippet"}
     assert all("cooking" not in s["filename"] for s in body["sources"])  # below min score
-    # First message: intent classified, no rewrite needed.
-    assert len(llm.calls_of("You classify")) == 1
+    # No booking words: straight to RAG without the intent classifier. First
+    # message, so no rewrite either -- the answer is the only LLM call.
+    assert llm.calls_of("You classify") == []
     assert llm.calls_of("standalone search query") == []
+    assert len(llm.calls) == 1
 
 
 def test_follow_up_question_is_rewritten_before_retrieval(app_fakes):

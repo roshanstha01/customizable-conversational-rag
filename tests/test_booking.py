@@ -1,7 +1,10 @@
 from datetime import date, datetime, time
+from zoneinfo import ZoneInfo
 
 import pytest
+from pydantic import ValidationError as PydanticValidationError
 
+from app.config import Settings, local_now
 from app.db.models import Booking
 from app.services.booking_service import BOOKING_STATE, BookingService
 from app.services.booking_validation import parse_date, parse_time, validate_draft
@@ -112,7 +115,40 @@ def make_service(classify="booking", extract=None):
 def test_question_is_not_handled_as_booking(db):
     service, llm, _ = make_service(classify="question")
     assert service.handle_message(db, "s1", "What's the interview schedule in the doc?", now=NOW) is None
+    assert len(llm.calls_of("You classify")) == 1  # has a booking word, so it is classified
     assert llm.calls_of("Extract interview booking") == []
+
+
+@pytest.mark.parametrize(
+    "message",
+    ["What is Qdrant?", "Summarize the document", "Who wrote the notebook?", "Is Redis used for memory?"],
+)
+def test_message_without_booking_words_skips_classifier(db, message):
+    service, llm, _ = make_service(classify="booking")
+    assert service.handle_message(db, "s1", message, now=NOW) is None
+    assert llm.calls == []
+
+
+@pytest.mark.parametrize(
+    "message",
+    ["Can I book a slot?", "I'd like to schedule something", "Set up a meeting please",
+     "Booking for next week", "I need an appointment", "Interviews?"],
+)
+def test_message_with_booking_words_is_classified(db, message):
+    service, llm, _ = make_service(classify="question")
+    service.handle_message(db, "s1", message, now=NOW)
+    assert len(llm.calls_of("You classify")) == 1
+
+
+def test_pending_booking_is_classified_without_booking_words(db):
+    service, llm, memory = make_service(extract=lambda message: {"email": "jane@example.com"})
+    memory.set_state("s1", BOOKING_STATE, {"name": "Jane Doe"}, 60)
+
+    reply = service.handle_message(db, "s1", "jane@example.com", now=NOW)
+
+    assert len(llm.calls_of("You classify")) == 1
+    assert memory.get_state("s1", BOOKING_STATE) == {"name": "Jane Doe", "email": "jane@example.com"}
+    assert "the date" in reply
 
 
 def test_classifier_output_is_parsed_leniently():
@@ -217,6 +253,51 @@ def test_extraction_ignores_values_not_in_message():
         extract=lambda message: {"name": "Invented Person", "email": "made@up.com", "date": "2026-09-29", "time": "9:00"}
     )
     assert service.extract_fields("Book an interview please", today=NOW) == {}
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "Book me in, my email is jane2026@example.com",     # digits only in the email
+        "Book an interview, email mar.sun@example.com",     # month/day words only in the email
+        "Book an interview for Mark Sunderland",            # names containing "mar"/"sun"
+    ],
+)
+def test_date_and_time_hints_ignore_emails_and_names(message):
+    service, _, _ = make_service(extract=lambda m: {"date": "2026-09-29", "time": "9:00"})
+    assert service.extract_fields(message, today=NOW) == {}
+
+
+def test_date_hint_still_accepts_real_dates():
+    service, _, _ = make_service(extract=lambda m: {"date": "2026-10-02", "time": "2pm"})
+    fields = service.extract_fields("Book jane@example.com on Friday at 2pm", today=NOW)
+    assert fields == {"date": "2026-10-02", "time": "2pm"}
+
+
+# --- Time zone ------------------------------------------------------------------
+
+@pytest.mark.parametrize("zone", ["Pacific/Kiritimati", "Pacific/Pago_Pago"])  # UTC+14 / UTC-11
+def test_today_uses_configured_timezone(zone):
+    llm = FakeLLM(extract=lambda message: {})
+    service = BookingService(llm, FakeMemoryService(), timezone=zone)
+
+    service.extract_fields("Book an interview tomorrow")
+
+    expected = datetime.now(ZoneInfo(zone)).date().isoformat()
+    assert f"Today is {expected}" in llm.calls_of("Extract interview booking")[0]["system"]
+
+
+def test_local_now_matches_timezone():
+    now = local_now("Asia/Kathmandu")
+    reference = datetime.now(ZoneInfo("Asia/Kathmandu")).replace(tzinfo=None)
+    assert now.tzinfo is None
+    assert abs((reference - now).total_seconds()) < 5
+
+
+def test_default_timezone_and_validation():
+    assert Settings(_env_file=None).timezone == "Asia/Kathmandu"
+    with pytest.raises(PydanticValidationError, match="Unknown time zone"):
+        Settings(_env_file=None, timezone="Mars/Olympus_Mons")
 
 
 def test_extraction_handles_invalid_json():

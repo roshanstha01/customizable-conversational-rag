@@ -1,5 +1,8 @@
+from datetime import datetime
 from functools import lru_cache
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,6 +13,8 @@ class Settings(BaseSettings):
 
     app_name: str = "AI/ML Intern Task API"
     log_level: str = "INFO"
+    # IANA time zone used for "now"/"today" in bookings (dates and times are local to it).
+    timezone: str = "Asia/Kathmandu"
 
     # Storage
     database_url: str = "sqlite:///./app.db"
@@ -50,7 +55,23 @@ class Settings(BaseSettings):
     # How long a half-finished booking is remembered between messages.
     booking_state_ttl_seconds: int = 60 * 30
 
+    @field_validator("timezone")
+    @classmethod
+    def validate_timezone(cls, value: str) -> str:
+        try:
+            ZoneInfo(value)
+        except (ZoneInfoNotFoundError, ValueError) as error:
+            raise ValueError(f"Unknown time zone {value!r}; use an IANA name like 'Asia/Kathmandu'.") from error
+        return value
+
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def local_now(timezone: str | None = None) -> datetime:
+    """Current wall-clock time in the configured time zone, as a naive datetime
+    (booking dates/times are stored as naive local values)."""
+    zone = ZoneInfo(timezone or get_settings().timezone)
+    return datetime.now(zone).replace(tzinfo=None)

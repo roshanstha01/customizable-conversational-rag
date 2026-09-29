@@ -45,6 +45,7 @@ def get_booking_service(
         llm_service=llm_service,
         memory_service=memory_service,
         state_ttl_seconds=settings.booking_state_ttl_seconds,
+        timezone=settings.timezone,
     )
 
 
