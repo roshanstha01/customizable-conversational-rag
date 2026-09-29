@@ -28,34 +28,47 @@ This project addresses each of these and measures retrieval quality with a small
 ## Architecture
 
 ```mermaid
-flowchart LR
+flowchart TB
     Client([Client]) --> API[FastAPI]
+    API -->|POST /api/ingest| Parse
+    API -->|POST /api/chat| Gate
 
-    subgraph Ingestion["POST /api/ingest"]
-        Parse[Parse PDF / TXT<br/>PyMuPDF] --> Chunk[Token-aware chunker<br/>fixed or paragraph]
-        Chunk --> Embed1[Embed chunks<br/>all-MiniLM-L6-v2]
+    subgraph Ingestion["Document ingestion"]
+        direction TB
+        Parse[Parse PDF / TXT] --> Chunk[Token-aware chunking<br/>fixed or paragraph]
+        Chunk --> Embed[Embed chunks<br/>all-MiniLM-L6-v2]
     end
 
-    subgraph Chat["POST /api/chat"]
+    subgraph Chat["Conversational RAG + booking"]
+        direction TB
         Gate{Booking words or<br/>booking in progress?}
-        Gate -- no --> Rewrite[Rewrite follow-up<br/>into standalone query]
-        Gate -- yes --> Classify[LLM intent<br/>classifier]
+        Gate -- no --> Rewrite[Rewrite follow-up into<br/>standalone query]
+        Gate -- yes --> Classify[Classify intent]
         Classify -- question --> Rewrite
-        Classify -- booking --> Extract[LLM extracts fields as JSON<br/>+ Pydantic validation]
-        Rewrite --> Embed2[Embed query] --> Search[Vector search<br/>filters + min score]
-        Search --> Answer[LLM answer<br/>with sources]
+        Classify -- booking --> Extract[Extract fields as JSON,<br/>validate with Pydantic]
+        Rewrite --> Search[Embed query,<br/>vector search]
+        Search --> Answer[Answer with sources]
     end
 
-    API --> Parse
-    API --> Gate
-    Embed1 --> Qdrant[(Qdrant)]
+    subgraph Storage["Storage"]
+        direction LR
+        Qdrant[(Qdrant<br/>chunk vectors)]
+        SQLite[(SQLite<br/>documents, bookings)]
+        Redis[(Redis<br/>chat history,<br/>booking state)]
+    end
+
+    Embed --> Qdrant
+    Chunk --> SQLite
     Search --> Qdrant
-    Parse --> SQLite[(SQLite<br/>documents, bookings)]
     Extract --> SQLite
-    Gate <--> Redis[(Redis<br/>history + booking state)]
+    Extract --> Redis
     Answer --> Redis
-    Classify & Extract & Rewrite & Answer -.-> Ollama[[Ollama LLM]]
+
+    classDef llm fill:#fde68a,stroke:#b45309,color:#1f2937
+    class Rewrite,Classify,Extract,Answer llm
 ```
+
+Yellow steps are LLM calls to Ollama (`llama3` by default).
 
 Services are created once in the FastAPI lifespan (so the embedding model loads a single time) and injected into routes as dependencies. Each external call is wrapped so that connection failures surface as `503 <service> is unavailable` rather than stack traces.
 
