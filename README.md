@@ -28,6 +28,7 @@ This project addresses each of these and measures retrieval quality with a small
 ## Architecture
 
 ```mermaid
+%%{init: {"theme": "neutral"}}%%
 flowchart TB
     Client([Client]) --> API[FastAPI]
     API -->|POST /api/ingest| Parse
@@ -42,12 +43,12 @@ flowchart TB
     subgraph Chat["Conversational RAG + booking"]
         direction TB
         Gate{Booking words or<br/>booking in progress?}
-        Gate -- no --> Rewrite[Rewrite follow-up into<br/>standalone query]
-        Gate -- yes --> Classify[Classify intent]
+        Gate -- no --> Rewrite["Rewrite follow-up into<br/>standalone query (LLM)"]
+        Gate -- yes --> Classify["Classify intent (LLM)"]
         Classify -- question --> Rewrite
-        Classify -- booking --> Extract[Extract fields as JSON,<br/>validate with Pydantic]
+        Classify -- booking --> Extract["Extract fields (LLM),<br/>validate with Pydantic"]
         Rewrite --> Search[Embed query,<br/>vector search]
-        Search --> Answer[Answer with sources]
+        Search --> Answer["Answer with sources (LLM)"]
     end
 
     subgraph Storage["Storage"]
@@ -63,12 +64,9 @@ flowchart TB
     Extract --> SQLite
     Extract --> Redis
     Answer --> Redis
-
-    classDef llm fill:#fde68a,stroke:#b45309,color:#1f2937
-    class Rewrite,Classify,Extract,Answer llm
 ```
 
-Yellow steps are LLM calls to Ollama (`llama3` by default).
+Steps marked (LLM) call the local LLM through Ollama (`llama3` by default).
 
 Services are created once in the FastAPI lifespan (so the embedding model loads a single time) and injected into routes as dependencies. Each external call is wrapped so that connection failures surface as `503 <service> is unavailable` rather than stack traces.
 
