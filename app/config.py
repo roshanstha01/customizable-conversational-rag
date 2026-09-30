@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     # Models
     embedding_model: str = "all-MiniLM-L6-v2"
     ollama_host: str = "http://localhost:11434"
-    llm_model: str = "llama3"
+    llm_model: str = "llama3.2"
 
     # Chunking (sizes are in embedding-model tokens; capped at the model's limit)
     chunk_size: int = 200

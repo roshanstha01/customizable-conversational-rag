@@ -66,7 +66,7 @@ flowchart TB
     Answer --> Redis
 ```
 
-Steps marked (LLM) call the local LLM through Ollama (`llama3` by default).
+Steps marked (LLM) call the local LLM through Ollama (`llama3.2` by default).
 
 Services are created once in the FastAPI lifespan (so the embedding model loads a single time) and injected into routes as dependencies. Each external call is wrapped so that connection failures surface as `503 <service> is unavailable` rather than stack traces.
 
@@ -119,7 +119,7 @@ cd ai-ml-intern-task
 docker compose up --build
 ```
 
-This starts the API on port 8000 with Qdrant, Redis and Ollama, and pulls the LLM (`llama3` by default; set `LLM_MODEL` to change it). The first start takes a while because it downloads the models. Then:
+This starts the API on port 8000 with Qdrant, Redis and Ollama, and pulls the LLM (`llama3.2` by default; set `LLM_MODEL` to change it). The first start takes a while because it downloads the models. Then:
 
 - Swagger UI: http://localhost:8000/docs
 - Health: http://localhost:8000/health
@@ -134,7 +134,7 @@ cp .env.example .env               # optional; every setting has a default
 
 docker run -d -p 6333:6333 qdrant/qdrant
 docker run -d -p 6379:6379 redis
-ollama pull llama3
+ollama pull llama3.2
 
 uvicorn app.main:app --reload
 ```
@@ -146,7 +146,7 @@ All settings are environment variables (or `.env`). See [.env.example](.env.exam
 | Setting | Default | Purpose |
 |---|---|---|
 | `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | sentence-transformers model |
-| `LLM_MODEL` | `llama3` | Ollama model for answers, rewriting and booking |
+| `LLM_MODEL` | `llama3.2` | Ollama model for answers, rewriting and booking |
 | `CHUNK_SIZE` / `CHUNK_OVERLAP` | `200` / `40` | Default chunking, in tokens (capped at the model limit) |
 | `TOP_K` / `MAX_TOP_K` | `5` / `20` | Chunks retrieved per question |
 | `MIN_SIMILARITY_SCORE` | `0.25` | Drop weaker matches |
