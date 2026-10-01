@@ -35,13 +35,13 @@ Chat:    question → rewrite follow-up → search Qdrant → LLM (llama3.2 via 
 
 Which chunking works best? I tested 5 configurations on 31 questions over 3 sample documents, measuring how often the correct passage was ranked first (**Hit@1**), how often it was in the top 3 (**Hit@3**), and how high it ranked on average (**MRR@5**, where 1.0 is perfect).
 
-| Configuration | Chunks | Avg tokens | Hit@1 | Hit@3 | MRR@5 |
-|---|---:|---:|---:|---:|---:|
-| Fixed, 64 tokens (overlap 12) | 44 | 52 | 0.65 | 0.90 | 0.783 |
-| Fixed, 128 tokens (overlap 25) | 23 | 108 | 0.68 | 1.00 | 0.833 |
-| Fixed, 254 tokens (overlap 50) | 11 | 227 | 0.84 | 0.97 | 0.910 |
-| **Paragraph, 128 tokens** | **25** | **88** | **0.94** | **1.00** | **0.968** |
-| Paragraph, 254 tokens | 11 | 200 | 0.77 | 0.97 | 0.872 |
+| Configuration | Chunks | Avg tokens | Hit@1 | Hit@3 | MRR@5 | p50 ms | p95 ms |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Fixed, 64 tokens (overlap 12) | 44 | 52 | 0.65 | 0.90 | 0.783 | 10.6 | 12.7 |
+| Fixed, 128 tokens (overlap 25) | 23 | 108 | 0.68 | 1.00 | 0.833 | 10.9 | 12.6 |
+| Fixed, 254 tokens (overlap 50) | 11 | 227 | 0.84 | 0.97 | 0.910 | 11.1 | 13.5 |
+| **Paragraph, 128 tokens** | **25** | **88** | **0.94** | **1.00** | **0.968** | **10.8** | **11.4** |
+| Paragraph, 254 tokens | 11 | 200 | 0.77 | 0.97 | 0.872 | 10.4 | 13.1 |
 
 **Chunks** is how many pieces the 3 documents were split into, and **Avg tokens** is the average size of a piece.
 
